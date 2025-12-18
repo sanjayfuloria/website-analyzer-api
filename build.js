@@ -10,14 +10,7 @@ const buildOptions = {
   outfile: "build/server.js",
   format: "esm",
   sourcemap: true,
-  external: [
-    "cheerio",
-    "node-fetch",
-    "express",
-    "cors",
-    "playwright",
-    "playwright-core",
-  ],
+  external: ["cheerio", "node-fetch", "express", "cors"],
 };
 
 if (isWatch) {

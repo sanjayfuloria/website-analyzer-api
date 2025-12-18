@@ -2,78 +2,41 @@ import express from "express";
 import cors from "cors";
 import fetch from "node-fetch";
 import * as cheerio from "cheerio";
-import { chromium } from "playwright";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const SCRAPER_API_KEY = process.env.SCRAPER_API_KEY || "your_api_key_here";
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
-// Helper function to fetch HTML with Playwright fallback
+// Helper function to fetch HTML using ScraperAPI
 async function fetchHTML(url: string): Promise<string> {
-  // First try with standard fetch
   try {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    const response = await fetch(url, {
+    // Use ScraperAPI for robust scraping
+    const scraperUrl = `http://api.scraperapi.com?api_key=${SCRAPER_API_KEY}&url=${encodeURIComponent(
+      url
+    )}&render=true`;
+
+    const response = await fetch(scraperUrl, {
       headers: {
         "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        Accept:
-          "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Accept-Encoding": "gzip, deflate, br",
-        Connection: "keep-alive",
-        "Upgrade-Insecure-Requests": "1",
-        "Sec-Fetch-Dest": "document",
-        "Sec-Fetch-Mode": "navigate",
-        "Sec-Fetch-Site": "none",
-        Referer: "https://www.google.com/",
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
       },
       redirect: "follow",
-      timeout: 10000,
+      timeout: 30000,
     });
 
     if (response.ok) {
-      return await response.text();
+      const html = await response.text();
+      return html;
+    } else {
+      throw new Error(`ScraperAPI error: ${response.status}`);
     }
   } catch (error) {
-    console.log(`Fetch failed, trying Playwright: ${url}`);
-  }
-
-  // Fallback to Playwright for blocked sites
-  let browser;
-  try {
-    browser = await chromium.launch({
-      headless: true,
-      args: [
-        "--disable-blink-features=AutomationControlled",
-        "--disable-web-resources",
-      ],
-    });
-
-    const context = await browser.createBrowserContext({
-      userAgent:
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      viewport: { width: 1920, height: 1080 },
-    });
-
-    const page = await context.newPage();
-    await page.goto(url, { waitUntil: "networkidle", timeout: 15000 });
-    const content = await page.content();
-    await context.close();
-    return content;
-  } catch (error) {
-    throw new Error(
-      `Failed to fetch ${url}: ${
-        error instanceof Error ? error.message : String(error)
-      }`
-    );
-  } finally {
-    if (browser) {
-      await browser.close();
-    }
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to fetch ${url}: ${errorMessage}`);
   }
 }
 
