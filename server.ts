@@ -46,13 +46,61 @@ app.get("/", (req, res) => {
     name: "Website Analyzer API",
     version: "1.0.0",
     status: "running",
+    scraperApiConfigured: SCRAPER_API_KEY !== "your_api_key_here",
     endpoints: [
       "GET /fetch?url=<url>",
       "GET /analyze?url=<url>",
       "GET /metadata?url=<url>",
       "GET /performance?url=<url>",
+      "GET /test - Test ScraperAPI connection",
     ],
   });
+});
+
+// Test endpoint to verify ScraperAPI connection
+app.get("/test", async (req, res) => {
+  try {
+    if (SCRAPER_API_KEY === "your_api_key_here") {
+      return res.status(400).json({
+        error: "SCRAPER_API_KEY environment variable not set",
+        instruction: "Set SCRAPER_API_KEY in your Hugging Face Spaces repository secrets",
+      });
+    }
+
+    const testUrl = "https://example.com";
+    const scraperUrl = `http://api.scraperapi.com?api_key=${SCRAPER_API_KEY}&url=${encodeURIComponent(
+      testUrl
+    )}&render=true`;
+
+    const response = await fetch(scraperUrl, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+      },
+      redirect: "follow",
+      timeout: 30000,
+    });
+
+    if (response.ok) {
+      res.json({
+        status: "success",
+        message: "ScraperAPI connection working",
+        statusCode: response.status,
+      });
+    } else {
+      res.status(response.status).json({
+        error: `ScraperAPI error: ${response.status}`,
+        message: await response.text(),
+      });
+    }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    res.status(500).json({
+      error: "ScraperAPI connection failed",
+      message: errorMessage,
+      instruction: "Check if SCRAPER_API_KEY is valid",
+    });
+  }
 });
 
 // Fetch webpage content
@@ -211,11 +259,17 @@ app.get("/performance", async (req, res) => {
 
     const startTime = Date.now();
 
-    const response = await fetch(url, {
+    const scraperUrl = `http://api.scraperapi.com?api_key=${SCRAPER_API_KEY}&url=${encodeURIComponent(
+      url
+    )}&render=true`;
+
+    const response = await fetch(scraperUrl, {
       headers: {
         "User-Agent":
-          "Mozilla/5.0 (compatible; WebsiteAnalyzer/1.0; +https://github.com/)",
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
       },
+      redirect: "follow",
+      timeout: 30000,
     });
 
     const responseTime = Date.now() - startTime;
