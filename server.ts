@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import fetch from "node-fetch";
 import * as cheerio from "cheerio";
+import { chromium } from "playwright";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -10,32 +11,70 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// Helper function to fetch HTML
+// Helper function to fetch HTML with Playwright fallback
 async function fetchHTML(url: string): Promise<string> {
-  // Add a small delay to be respectful
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  const response = await fetch(url, {
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-      "Accept-Language": "en-US,en;q=0.9",
-      "Accept-Encoding": "gzip, deflate, br",
-      "Connection": "keep-alive",
-      "Upgrade-Insecure-Requests": "1",
-      "Sec-Fetch-Dest": "document",
-      "Sec-Fetch-Mode": "navigate",
-      "Sec-Fetch-Site": "none",
-    },
-    redirect: "follow",
-  });
+  // First try with standard fetch
+  try {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        Accept:
+          "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Accept-Encoding": "gzip, deflate, br",
+        Connection: "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        Referer: "https://www.google.com/",
+      },
+      redirect: "follow",
+      timeout: 10000,
+    });
 
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
+    if (response.ok) {
+      return await response.text();
+    }
+  } catch (error) {
+    console.log(`Fetch failed, trying Playwright: ${url}`);
   }
 
-  return await response.text();
+  // Fallback to Playwright for blocked sites
+  let browser;
+  try {
+    browser = await chromium.launch({
+      headless: true,
+      args: [
+        "--disable-blink-features=AutomationControlled",
+        "--disable-web-resources",
+      ],
+    });
+
+    const context = await browser.createBrowserContext({
+      userAgent:
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      viewport: { width: 1920, height: 1080 },
+    });
+
+    const page = await context.newPage();
+    await page.goto(url, { waitUntil: "networkidle", timeout: 15000 });
+    const content = await page.content();
+    await context.close();
+    return content;
+  } catch (error) {
+    throw new Error(
+      `Failed to fetch ${url}: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
+  }
 }
 
 // Health check endpoint

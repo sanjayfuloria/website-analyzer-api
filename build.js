@@ -6,11 +6,18 @@ const buildOptions = {
   entryPoints: ["server.ts"],
   bundle: true,
   platform: "node",
-  target: "node18",
+  target: "node20",
   outfile: "build/server.js",
   format: "esm",
   sourcemap: true,
-  external: ["cheerio", "node-fetch", "express", "cors"],
+  external: [
+    "cheerio",
+    "node-fetch",
+    "express",
+    "cors",
+    "playwright",
+    "playwright-core",
+  ],
 };
 
 if (isWatch) {
