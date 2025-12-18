@@ -5,14 +5,13 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
+# Copy source code (needed for build step)
+COPY tsconfig.json ./
+COPY build.js ./
+COPY server.ts ./
 
-# Copy source code
-COPY . .
-
-# Build the application
-RUN npm run build
+# Install dependencies and build
+RUN npm install && npm run build
 
 # Expose port
 EXPOSE 7860
