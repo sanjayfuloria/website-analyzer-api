@@ -1,11 +1,9 @@
-FROM node:18-slim
+FROM node:20-slim
 
 WORKDIR /app
 
-# Copy package files
+# Copy all source files
 COPY package*.json ./
-
-# Copy source code (needed for build step)
 COPY tsconfig.json ./
 COPY build.js ./
 COPY server.ts ./

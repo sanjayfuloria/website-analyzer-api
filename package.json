@@ -7,8 +7,7 @@
   "scripts": {
     "build": "node build.js",
     "start": "node build/server.js",
-    "dev": "node build.js --watch & node build/server.js",
-    "prepare": "npm run build"
+    "dev": "node build.js --watch & node build/server.js"
   },
   "keywords": [
     "website",
