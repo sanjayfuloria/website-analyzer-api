@@ -1,0 +1,245 @@
+openapi: 3.0.0
+info:
+  title: Website Analyzer API
+  description: API for analyzing websites - fetch content, extract metadata, analyze structure, and check performance
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+paths:
+  /:
+    get:
+      operationId: getApiInfo
+      summary: Get API information
+      description: Returns basic information about the API and available endpoints
+      responses:
+        '200':
+          description: API information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  version:
+                    type: string
+                  status:
+                    type: string
+                  endpoints:
+                    type: array
+                    items:
+                      type: string
+  
+  /fetch:
+    get:
+      operationId: fetchWebpage
+      summary: Fetch webpage content
+      description: Fetches and returns the main content from a webpage including title, meta description, and cleaned text content
+      parameters:
+        - name: url
+          in: query
+          required: true
+          description: The URL of the webpage to fetch
+          schema:
+            type: string
+            format: uri
+          example: https://example.com
+      responses:
+        '200':
+          description: Successfully fetched webpage content
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                  title:
+                    type: string
+                  metaDescription:
+                    type: string
+                  content:
+                    type: string
+                  contentLength:
+                    type: integer
+        '400':
+          description: Bad request - URL parameter missing
+        '500':
+          description: Server error
+  
+  /analyze:
+    get:
+      operationId: analyzeStructure
+      summary: Analyze webpage structure
+      description: Analyzes the HTML structure of a webpage and returns counts of various elements
+      parameters:
+        - name: url
+          in: query
+          required: true
+          description: The URL of the webpage to analyze
+          schema:
+            type: string
+            format: uri
+          example: https://example.com
+      responses:
+        '200':
+          description: Successfully analyzed webpage structure
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                  headings:
+                    type: object
+                    properties:
+                      h1:
+                        type: integer
+                      h2:
+                        type: integer
+                      h3:
+                        type: integer
+                      h4:
+                        type: integer
+                      h5:
+                        type: integer
+                      h6:
+                        type: integer
+                  links:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      external:
+                        type: integer
+                      internal:
+                        type: integer
+                  images:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      withAlt:
+                        type: integer
+                      withoutAlt:
+                        type: integer
+                  forms:
+                    type: integer
+                  buttons:
+                    type: integer
+                  inputs:
+                    type: integer
+                  videos:
+                    type: integer
+                  iframes:
+                    type: integer
+                  tables:
+                    type: integer
+        '400':
+          description: Bad request - URL parameter missing
+        '500':
+          description: Server error
+  
+  /metadata:
+    get:
+      operationId: extractMetadata
+      summary: Extract webpage metadata
+      description: Extracts metadata from a webpage including Open Graph tags, Twitter Card tags, and standard meta tags
+      parameters:
+        - name: url
+          in: query
+          required: true
+          description: The URL of the webpage to extract metadata from
+          schema:
+            type: string
+            format: uri
+          example: https://example.com
+      responses:
+        '200':
+          description: Successfully extracted metadata
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                  title:
+                    type: string
+                  description:
+                    type: string
+                  keywords:
+                    type: string
+                  author:
+                    type: string
+                  canonical:
+                    type: string
+                  robots:
+                    type: string
+                  openGraph:
+                    type: object
+                  twitter:
+                    type: object
+        '400':
+          description: Bad request - URL parameter missing
+        '500':
+          description: Server error
+  
+  /performance:
+    get:
+      operationId: checkPerformance
+      summary: Check webpage performance
+      description: Checks basic performance metrics of a webpage including response time, page size, and resource counts
+      parameters:
+        - name: url
+          in: query
+          required: true
+          description: The URL of the webpage to check performance for
+          schema:
+            type: string
+            format: uri
+          example: https://example.com
+      responses:
+        '200':
+          description: Successfully checked performance
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                  responseTime:
+                    type: string
+                  statusCode:
+                    type: integer
+                  contentType:
+                    type: string
+                  pageSize:
+                    type: string
+                  resources:
+                    type: object
+                    properties:
+                      scripts:
+                        type: integer
+                      stylesheets:
+                        type: integer
+                      images:
+                        type: integer
+                      totalResources:
+                        type: integer
+                  headers:
+                    type: object
+                    properties:
+                      server:
+                        type: string
+                      cacheControl:
+                        type: string
+                      contentEncoding:
+                        type: string
+        '400':
+          description: Bad request - URL parameter missing
+        '500':
+          description: Server error
