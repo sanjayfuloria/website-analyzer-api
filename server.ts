@@ -63,7 +63,8 @@ app.get("/test", async (req, res) => {
     if (SCRAPER_API_KEY === "your_api_key_here") {
       return res.status(400).json({
         error: "SCRAPER_API_KEY environment variable not set",
-        instruction: "Set SCRAPER_API_KEY in your Hugging Face Spaces repository secrets",
+        instruction:
+          "Set SCRAPER_API_KEY in your Hugging Face Spaces repository secrets",
       });
     }
 
